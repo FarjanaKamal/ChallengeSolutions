@@ -29,7 +29,7 @@ public class NewsletterController : ControllerBase
         foreach(String uname in UserNameList){
             EmailRemovedPeriod+=uname;
         }
-        EmailRemovedPeriod+=Edomain;
+        EmailRemovedPeriod+="@"+Edomain;
         
         //Email=EmailRemovedPeriod;
         // var inserted = _connection.Execute(@"
@@ -38,13 +38,25 @@ public class NewsletterController : ControllerBase
         //     FROM ( VALUES (@Email) ) AS V(Email)
         //     WHERE NOT EXISTS ( SELECT * FROM NewsletterSubscription e WHERE e.Email = v.Email)
         // ", new { Email = Email });
-        var inserted = _connection.Execute(@"
-            INSERT INTO NewsletterSubscription (Email)
-            SELECT *
-            FROM ( VALUES (@EmailRemovedPeriod) ) AS V(Email)
-            WHERE NOT EXISTS ( SELECT Replace(e.Email,'.','') FROM NewsletterSubscription e WHERE e.Email = v.Email)
-        ", new { Email = Email, EmailRemovedPeriod=EmailRemovedPeriod });
 
+        ////// -------------First version ---------
+        // var inserted = _connection.Execute(@"
+        //     INSERT INTO NewsletterSubscription (Email)
+        //     SELECT *
+        //     FROM ( VALUES (@EmailRemovedPeriod) ) AS V(Email)
+        //     WHERE NOT EXISTS ( 
+        //     SELECT Replace(e.Email,'.','') FROM NewsletterSubscription e WHERE e.Email = v.Email                      
+        //     )
+        // ", new { Email = Email, EmailRemovedPeriod=EmailRemovedPeriod });
+  ////// -------------Second version ---------
+            var inserted = _connection.Execute(@"
+                        INSERT INTO NewsletterSubscription (Email)
+                        SELECT *
+                        FROM ( VALUES (@Email) ) AS W(Email), ( VALUES (@EmailRemovedPeriod) ) AS V(EmailPeriod)
+                        WHERE V(EmailPeriod) NOT EXISTS ( 
+                        SELECT Replace(e.Email,'.','') FROM NewsletterSubscription e WHERE e.Email = v.Email                     
+                        )
+                    ", new { Email = Email, EmailRemovedPeriod=EmailRemovedPeriod });
         return inserted == 0 ? Conflict("email is already subscribed") : Ok();
     }
 }
