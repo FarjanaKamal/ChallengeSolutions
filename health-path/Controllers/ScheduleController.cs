@@ -25,13 +25,17 @@ public class ScheduleController : ControllerBase
         var preparedResults = dbResults.Select((t) => {
             t.Item1.Recurrences.Add(t.Item2);
             return t.Item1;
-        });  
+        }); 
+        //creating a new list of ScheduleEvent 
         var returnResults=new List<ScheduleEvent>();
+        //This for loop is to check whether there is duplicate Id of Schedule Event
         foreach(var evnt in preparedResults){
+           //When there is a duplicate Id then the Recurrences will be added to it
            if(returnResults.Any(x=>x.Id==evnt.Id)){
                int index=returnResults.FindIndex(x=>x.Id==evnt.Id);
                returnResults[index].Recurrences.Add(evnt.Recurrences.FirstOrDefault()); 
            }
+           //otherwise there will be a new item in the list
            else{
               returnResults.Add(evnt);
            }
