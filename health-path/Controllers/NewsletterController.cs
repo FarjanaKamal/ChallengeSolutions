@@ -38,13 +38,12 @@ public class NewsletterController : ControllerBase
         //     FROM ( VALUES (@Email) ) AS V(Email)
         //     WHERE NOT EXISTS ( SELECT * FROM NewsletterSubscription e WHERE e.Email = v.Email)
         // ", new { Email = Email });
-
         var inserted = _connection.Execute(@"
             INSERT INTO NewsletterSubscription (Email)
             SELECT *
-            FROM ( VALUES (@Email) ) AS V(Email)
-            WHERE NOT EXISTS ( SELECT * FROM NewsletterSubscription e WHERE e.Email = v.Email)
-        ", new { Email = Email });
+            FROM ( VALUES (@EmailRemovedPeriod) ) AS V(Email)
+            WHERE NOT EXISTS ( SELECT Replace(e.Email,'.','') FROM NewsletterSubscription e WHERE e.Email = v.Email)
+        ", new { Email = Email, EmailRemovedPeriod=EmailRemovedPeriod });
 
         return inserted == 0 ? Conflict("email is already subscribed") : Ok();
     }
