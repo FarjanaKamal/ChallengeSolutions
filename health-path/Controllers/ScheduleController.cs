@@ -22,13 +22,22 @@ public class ScheduleController : ControllerBase
     public ActionResult<IEnumerable<ScheduleEvent>> Fetch()
     {
         var dbResults = ReadData();
-
         var preparedResults = dbResults.Select((t) => {
             t.Item1.Recurrences.Add(t.Item2);
             return t.Item1;
-        });
-
-        return Ok(preparedResults);
+        });  
+        var returnResults=new List<ScheduleEvent>();
+        foreach(var evnt in preparedResults){
+           if(returnResults.Any(x=>x.Id==evnt.Id)){
+               int index=returnResults.FindIndex(x=>x.Id==evnt.Id);
+               returnResults[index].Recurrences.Add(evnt.Recurrences.FirstOrDefault()); 
+           }
+           else{
+              returnResults.Add(evnt);
+           }
+              
+        }
+        return Ok(returnResults);
     }
 
     private IEnumerable<(ScheduleEvent, ScheduleEventRecurrence)> ReadData() {
@@ -36,7 +45,8 @@ public class ScheduleController : ControllerBase
             SELECT e.*, r.*
             FROM Event e
             JOIN EventRecurrence r ON e.Id = r.EventId
-            ORDER BY e.Id, r.DayOfWeek, r.StartTime, r.EndTime
+            GROUP BY e.Id ,e.Name,e.Description,r.Id,r.EventId, r.DayOfWeek, r.StartTime, r.EndTime      
+            ORDER BY e.Id, r.DayOfWeek, r.StartTime, r.EndTime         
         ";
         return _connection.Query<ScheduleEvent, ScheduleEventRecurrence, (ScheduleEvent, ScheduleEventRecurrence)>(sql, (e, r) => (e, r));
     }
