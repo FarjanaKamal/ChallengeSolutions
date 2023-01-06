@@ -43,15 +43,15 @@ public class ScheduleController : ControllerBase
         }
         return Ok(returnResults);
     }
-
+    
     private IEnumerable<(ScheduleEvent, ScheduleEventRecurrence)> ReadData() {
         var sql = @"
             SELECT e.*, r.*
             FROM Event e
-            JOIN EventRecurrence r ON e.Id = r.EventId
-            GROUP BY e.Id ,e.Name,e.Description,r.Id,r.EventId, r.DayOfWeek, r.StartTime, r.EndTime      
+            JOIN EventRecurrence r ON e.Id = r.EventId   
             ORDER BY e.Id, r.DayOfWeek, r.StartTime, r.EndTime         
         ";
+         //GROUP BY e.Id ,e.Name,e.Description,r.Id,r.EventId, r.DayOfWeek, r.StartTime, r.EndTime  
         return _connection.Query<ScheduleEvent, ScheduleEventRecurrence, (ScheduleEvent, ScheduleEventRecurrence)>(sql, (e, r) => (e, r));
     }
 }
