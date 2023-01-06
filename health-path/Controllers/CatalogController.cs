@@ -36,9 +36,13 @@ public class CatalogController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NaturalProduct>>> Fetch()
     {
+        // var fullURL=HttpContext.Request.Headers["Referer"].ToString();
+        // var Route=fullURL.Split(new[]{"store-catalog"},StringSplitOptions.None)[1];
         var nhpids = GetStockedProducts();
+        // var routeID=
         var productRecords = await FetchProductRecords(nhpids);
         var ids = productRecords.Keys;
+        var route = await FetchRouteData(ids);
         var purposes = await FetchProductPurposes(ids);
 
         var products = new List<NaturalProduct>();
@@ -48,7 +52,8 @@ public class CatalogController : ControllerBase
                 productRecord.ProductName,
                 productRecord.CompanyName,
                 productRecord.Active,
-                purposes.GetValueOrDefault(productRecord.Id, ImmutableList<string>.Empty)
+                purposes.GetValueOrDefault(productRecord.Id, ImmutableList<string>.Empty),
+                route.GetValueOrDefault(productRecord.Id,string.Empty)
             ));
         }
 
@@ -104,7 +109,25 @@ public class CatalogController : ControllerBase
 
         return productPurposes.ToImmutableDictionary(e => e.Key, e => e.Value.ToImmutableList());
     }
+    private async Task<ImmutableDictionary<string, string>> FetchRouteData(IEnumerable<string> ids)
+    {
+        var ProductRoute = new ConcurrentDictionary<string, string>();
 
+        await FetchMany<JsonArray>(
+            ids.Select(id => $"{_lnhpdBaseUrl}/productroute/?lang=en&id={id}"),
+            r => r,
+            rec =>
+            {
+                string key = rec["lnhpd_id"]!.ToString();
+                string value = rec!["route_type_desc"]!.GetValue<string>();
+                //ConcurrentBag<string> route = ProductRoute.GetOrAdd(key, _ => new ConcurrentBag<string>());
+                //route.Add(value);
+            }
+        );
+
+        return ProductRoute.ToImmutableDictionary(e => e.Key, e => e.Value);
+       
+    }
     private async Task FetchMany<T>(IEnumerable<string> inputUrls, Func<T?, JsonArray?> finder, Action<JsonObject> processor) {
         using (var limiter = new Limiter(10))
         {
