@@ -36,15 +36,11 @@ public class CatalogController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NaturalProduct>>> Fetch()
     {
-        // var fullURL=HttpContext.Request.Headers["Referer"].ToString();
-        // var Route=fullURL.Split(new[]{"store-catalog"},StringSplitOptions.None)[1];
         var nhpids = GetStockedProducts();
-        // var routeID=
         var productRecords = await FetchProductRecords(nhpids);
         var ids = productRecords.Keys;
         var route = await FetchRouteData(ids);
         var purposes = await FetchProductPurposes(ids);
-
         var products = new List<NaturalProduct>();
         foreach (var productRecord in productRecords.Values) {
             products.Add(new NaturalProduct(
@@ -118,15 +114,16 @@ public class CatalogController : ControllerBase
             r => r,
             rec =>
             {
-                string key = rec["lnhpd_id"]!.ToString();
-                string value = rec!["route_type_desc"]!.GetValue<string>();
+                ProductRoute[ rec["lnhpd_id"]!.ToString()]= rec!["route_type_desc"]!.GetValue<string>();
+                // string key = rec["lnhpd_id"]!.ToString();
+                // string value = rec!["route_type_desc"]!.GetValue<string>();
                 //ConcurrentBag<string> route = ProductRoute.GetOrAdd(key, _ => new ConcurrentBag<string>());
                 //route.Add(value);
             }
         );
 
-        return ProductRoute.ToImmutableDictionary(e => e.Key, e => e.Value);
-       
+        // return ProductRoute.ToImmutableDictionary(e => e.Key, e => e.Value);
+       return ProductRoute.ToImmutableDictionary();
     }
     private async Task FetchMany<T>(IEnumerable<string> inputUrls, Func<T?, JsonArray?> finder, Action<JsonObject> processor) {
         using (var limiter = new Limiter(10))
