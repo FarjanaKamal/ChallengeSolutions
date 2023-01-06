@@ -33,7 +33,8 @@ public class ScheduleController : ControllerBase
            //When there is a duplicate Id then the Recurrences will be added to it
            if(returnResults.Any(x=>x.Id==evnt.Id)){
                int index=returnResults.FindIndex(x=>x.Id==evnt.Id);
-               returnResults[index].Recurrences.Add(evnt.Recurrences.FirstOrDefault()); 
+               if(evnt.Recurrences.Count!=0)
+                   returnResults[index].Recurrences.Add(evnt.Recurrences.FirstOrDefault()); 
            }
            //otherwise there will be a new item in the list
            else{
