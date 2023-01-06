@@ -52,7 +52,6 @@ public class CatalogController : ControllerBase
                 route.GetValueOrDefault(productRecord.Id,string.Empty)
             ));
         }
-
         return Ok(products);
     }
 

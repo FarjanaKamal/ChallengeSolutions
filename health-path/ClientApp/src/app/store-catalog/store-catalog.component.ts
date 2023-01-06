@@ -10,7 +10,7 @@ import { NaturalProduct } from '../model/catalog.model';
 export class StoreCatalogComponent implements OnInit {
 
   public products: readonly NaturalProduct[] = [];
-  public readonly columnsToDisplay = ['licenceNo', 'productName', 'companyName', 'active', 'purposes','ProductRoute'];
+  public readonly columnsToDisplay = ['licenceNo', 'productName', 'companyName', 'active', 'purposes','productRoute'];
 
   constructor(private catalogService: CatalogService) { }
 
