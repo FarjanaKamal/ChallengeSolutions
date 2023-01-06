@@ -25,11 +25,11 @@ public class NewsletterController : ControllerBase
         String UserName=emailList[0];
         String Edomain=emailList[1];
         String[] UserNameList=UserName.Split(".",StringSplitOptions.RemoveEmptyEntries);
-        string EmailRemovedPeriod=" ";
+        string EmailRemovedPeriod="";
         foreach(String uname in UserNameList){
             EmailRemovedPeriod+=uname;
         }
-        EmailRemovedPeriod+="@"+Edomain;
+        EmailRemovedPeriod+="@"+Edomain.Replace(".","");
         
         //Email=EmailRemovedPeriod;
         // var inserted = _connection.Execute(@"
@@ -52,9 +52,15 @@ public class NewsletterController : ControllerBase
             var inserted = _connection.Execute(@"
                         INSERT INTO NewsletterSubscription (Email)
                         SELECT *
-                        FROM ( VALUES (@Email) ) AS W(Email), ( VALUES (@EmailRemovedPeriod) ) AS V(EmailPeriod)
-                        WHERE V(EmailPeriod) NOT EXISTS ( 
-                        SELECT Replace(e.Email,'.','') FROM NewsletterSubscription e WHERE e.Email = v.Email                     
+                        FROM ( VALUES (@Email) ) AS V(Email)
+                        WHERE NOT EXISTS ( 
+                            select W.Email
+                            from(
+                            Select f.Email as Email, g.Email as EmailWithoutPeriod
+                            FROM (SELECT Replace(e.Email,'.','') as Email FROM NewsletterSubscription as e) as g CROSS JOIN
+                            NewsletterSubscription as f
+                            ) as W
+                            where W.EmailWithoutPeriod=@EmailRemovedPeriod                    
                         )
                     ", new { Email = Email, EmailRemovedPeriod=EmailRemovedPeriod });
         return inserted == 0 ? Conflict("email is already subscribed") : Ok();
